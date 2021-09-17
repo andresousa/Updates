@@ -3,6 +3,7 @@
 //  Updates
 //
 //  Created by Ross Butler on 12/27/18.
+//  Modified by André Sousa on 17/09/21.
 //
 
 import Foundation
@@ -12,7 +13,7 @@ import SafariServices
 public class UpdatesUI: NSObject {
     
     private let animated: Bool
-    private let completion: (() -> Void)?
+    private var completion: (() -> Void)?
     private static var updatesUI: UpdatesUI = UpdatesUI()
     
     public init(animated: Bool = true, completion: (() -> Void)? = nil) {
@@ -38,6 +39,7 @@ public class UpdatesUI: NSObject {
             return
         }
         let animated = self.animated
+        self.completion = completion
         let appStoreIdentifier: NSNumber = NSNumber(value: appStoreIdentifierInt)
         let parameters = [SKStoreProductParameterITunesItemIdentifier: appStoreIdentifier]
         let viewController = SKStoreProductViewController()
@@ -97,7 +99,7 @@ public class UpdatesUI: NSObject {
         let alert = UIAlertController(title: alertTitle, message: alertMessage, preferredStyle: .alert)
         let updateButtonTitle = buttonTitle("Update")
         let updateAction = UIAlertAction(title: updateButtonTitle, style: .default) { _ in
-            alert.dismiss(animated: animated, completion: completion)
+            alert.dismiss(animated: animated, completion: nil)
             self.presentAppStore(animated: animated, completion: completion,
                                  presentingViewController: presentingViewController)
         }
@@ -152,7 +154,14 @@ private extension UpdatesUI {
     /// Presents the specified URL
     func presentSafariViewController(animated: Bool, presentingViewController: UIViewController, url: URL) {
         let safariViewController = SFSafariViewController(url: url)
-        presentingViewController.present(safariViewController, animated: animated, completion: nil)
+        safariViewController.delegate = self
+        presentingViewController.present(safariViewController, animated: animated)
     }
     
+}
+
+extension UpdatesUI: SFSafariViewControllerDelegate {
+    public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+        controller.dismiss(animated: animated, completion: completion)
+    }
 }
